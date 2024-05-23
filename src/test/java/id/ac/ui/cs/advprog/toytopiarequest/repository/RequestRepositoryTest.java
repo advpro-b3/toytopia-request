@@ -1,10 +1,10 @@
 package id.ac.ui.cs.advprog.toytopiarequest.repository;
 
-
 import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ public class RequestRepositoryTest {
                 .price(175.0)
                 .productLink(originalRequest.getProductLink())
                 .currency(originalRequest.getCurrency())
-                .status("APPROVE")
+                .status("APPROVED")
                 .build();
 
         Request result = requestRepository.save(updatedRequest);
@@ -72,5 +72,15 @@ public class RequestRepositoryTest {
 
         assertEquals(updatedRequest.getPrice(), result.getPrice());
         assertEquals(updatedRequest.getStatus(), foundRequest.getStatus());
+    }
+
+    @Test
+    void testDelete() {
+        Request requestToDelete = requests.get(0);
+        requestRepository.save(requestToDelete);
+        requestRepository.deleteById(requestToDelete.getRequestId());
+
+        Request foundRequest = requestRepository.findById(requestToDelete.getRequestId());
+        assertNull(foundRequest);
     }
 }

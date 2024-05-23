@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Repository
@@ -28,5 +29,20 @@ public class RequestRepository {
             }
         }
         return null;
+    }
+
+    public List<Request> findAll() {
+        return new ArrayList<>(requests);
+    }
+
+    public void deleteById(String requestId) {
+        Iterator<Request> iterator = requests.iterator();
+        while (iterator.hasNext()) {
+            Request request = iterator.next();
+            if (request.getRequestId().equals(requestId)) {
+                iterator.remove();
+                return;
+            }
+        }
     }
 }
