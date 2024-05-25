@@ -39,7 +39,7 @@ public class RequestController {
 
     @PutMapping("/{requestId}")
     public ResponseEntity<Request> updateRequest(@PathVariable String requestId, @RequestBody Request request) {
-        request.setRequestId(requestId);
+        request.setId(requestId);
         Request updatedRequest = requestService.save(request);
         return ResponseEntity.ok(updatedRequest);
     }

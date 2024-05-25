@@ -1,86 +1,109 @@
 package id.ac.ui.cs.advprog.toytopiarequest.repository;
 
 import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@SpringBootTest
 public class RequestRepositoryTest {
+
+    @Mock
+    private EntityManager entityManager;
+
+    @InjectMocks
     private RequestRepository requestRepository;
-    private List<Request> requests;
 
     @BeforeEach
-    void setup() {
-        requestRepository = new RequestRepository();
-        requests = new ArrayList<>();
-
-        Request request1 = Request.builder()
-                .requestId("1")
-                .productName("Toy Car")
-                .imageLink("http://example.com/toycar.png")
-                .price(200.0)
-                .productLink("http://example.com/toycar")
-                .currency("USD")
-                .status("PENDING")
-                .build();
-
-        Request request2 = Request.builder()
-                .requestId("2")
-                .productName("Toy Train")
-                .imageLink("http://example.com/toytrain.png")
-                .price(150.0)
-                .productLink("http://example.com/toytrain")
-                .currency("USD")
-                .status("PENDING")
-                .build();
-
-        requests.add(request1);
-        requests.add(request2);
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testSaveCreate() {
-        Request newRequest = requests.get(0);
-        Request savedRequest = requestRepository.save(newRequest);
-        Request foundRequest = requestRepository.findById(newRequest.getRequestId());
+    public void testSaveNewRequest() {
+        Request request = new Request();
+        request.setCurrency("USD");
+        request.setPrice(100.0);
 
-        assertEquals(newRequest.getRequestId(), savedRequest.getRequestId());
-        assertEquals(newRequest.getProductName(), foundRequest.getProductName());
+        requestRepository.save(request);
+
+        verify(entityManager, times(1)).persist(request);
+        verify(entityManager, never()).merge(any(Request.class));
     }
 
     @Test
-    void testSaveUpdate() {
-        Request originalRequest = requests.get(1);
-        requestRepository.save(originalRequest);
+    public void testSaveExistingRequest() {
+        Request request = new Request();
+        request.setId("1");
+        request.setCurrency("USD");
+        request.setPrice(100.0);
 
-        Request updatedRequest = Request.builder()
-                .requestId(originalRequest.getRequestId())
-                .productName(originalRequest.getProductName())
-                .imageLink(originalRequest.getImageLink())
-                .price(175.0)
-                .productLink(originalRequest.getProductLink())
-                .currency(originalRequest.getCurrency())
-                .status("APPROVED")
-                .build();
+        requestRepository.save(request);
 
-        Request result = requestRepository.save(updatedRequest);
-        Request foundRequest = requestRepository.findById(updatedRequest.getRequestId());
-
-        assertEquals(updatedRequest.getPrice(), result.getPrice());
-        assertEquals(updatedRequest.getStatus(), foundRequest.getStatus());
+        verify(entityManager, times(1)).merge(request);
+        verify(entityManager, never()).persist(any(Request.class));
     }
 
     @Test
-    void testDelete() {
-        Request requestToDelete = requests.get(0);
-        requestRepository.save(requestToDelete);
-        requestRepository.deleteById(requestToDelete.getRequestId());
+    public void testFindById() {
+        Request request = new Request();
+        request.setId("1");
+        when(entityManager.find(Request.class, "1")).thenReturn(request);
 
-        Request foundRequest = requestRepository.findById(requestToDelete.getRequestId());
-        assertNull(foundRequest);
+        Request foundRequest = requestRepository.findById("1");
+
+        assertNotNull(foundRequest);
+        assertEquals("1", foundRequest.getId());
+        verify(entityManager, times(1)).find(Request.class, "1");
+    }
+
+    @Test
+    public void testFindAll() {
+        Request request1 = new Request();
+        request1.setId("1");
+        Request request2 = new Request();
+        request2.setId("2");
+
+        TypedQuery<Request> query = mock(TypedQuery.class);
+        when(entityManager.createQuery("SELECT r FROM Request r", Request.class)).thenReturn(query);
+        when(query.getResultList()).thenReturn(Arrays.asList(request1, request2));
+
+        List<Request> requests = requestRepository.findAll();
+
+        assertEquals(2, requests.size());
+        verify(entityManager, times(1)).createQuery("SELECT r FROM Request r", Request.class);
+        verify(query, times(1)).getResultList();
+    }
+
+    @Test
+    public void testDeleteById() {
+        Request request = new Request();
+        request.setId("1");
+        when(entityManager.find(Request.class, "1")).thenReturn(request);
+
+        requestRepository.deleteById("1");
+
+        verify(entityManager, times(1)).remove(request);
+    }
+
+    @Test
+    public void testDeleteByIdNotFound() {
+        when(entityManager.find(Request.class, "1")).thenReturn(null);
+
+        requestRepository.deleteById("1");
+
+        verify(entityManager, never()).remove(any(Request.class));
     }
 }

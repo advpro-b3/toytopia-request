@@ -22,17 +22,27 @@ repositories {
     mavenCentral()
 }
 
+val dotenvVersion = "4.0.0"
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("me.paulschwarz:spring-dotenv:$dotenvVersion")
+    implementation("org.json:json:20210307")
+    implementation("org.springframework.boot:spring-boot-starter-webflux") // for WebClient
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito:mockito-junit-jupiter")
 }
+
 
 tasks.withType<Test> {
     useJUnitPlatform()

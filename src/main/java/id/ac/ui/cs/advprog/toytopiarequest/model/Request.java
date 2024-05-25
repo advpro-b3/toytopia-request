@@ -1,29 +1,36 @@
 package id.ac.ui.cs.advprog.toytopiarequest.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import jakarta.persistence.*;
 
-@Builder
+@Entity
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
 public class Request {
-    String requestId;
-    String productName;
-    String imageLink;
-    Double price;
-    String productLink;
-    String currency;
-    String status;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    public Request(String requestId, String productName, String imageLink, Double price, String productLink, String currency, String status) {
-        this.requestId = requestId;
-        this.productName = productName;
-        this.imageLink = imageLink;
-        this.price = price;
-        this.productLink = productLink;
-        this.currency = currency;
-        this.status = status;
-    }
+    @Column(nullable = false)
+    private String productName;
+
+    @Column
+    private String imageLink;
+
+    @Column(nullable = false)
+    private Double price;
+
+    @Column(nullable = false)
+    private String productLink;
+
+    @Column(nullable = false)
+    private String currency;
+
+    @Column(nullable = false)
+    private String status;
 }

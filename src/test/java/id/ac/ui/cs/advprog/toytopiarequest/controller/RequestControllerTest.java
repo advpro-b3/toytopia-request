@@ -2,102 +2,124 @@ package id.ac.ui.cs.advprog.toytopiarequest.controller;
 
 import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import id.ac.ui.cs.advprog.toytopiarequest.service.RequestService;
-import id.ac.ui.cs.advprog.toytopiarequest.service.RequestServiceImpl;
-import id.ac.ui.cs.advprog.toytopiarequest.repository.RequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
+
+import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WebMvcTest(RequestController.class)
 public class RequestControllerTest {
 
-    private RequestController requestController;
-    private RequestService requestService;
-    private RequestRepository requestRepository;
+    @Autowired
+    private MockMvc mockMvc;
 
-    private Request request1;
-    private Request request2;
+    @MockBean
+    private RequestService requestService;
+
+    private Request request;
 
     @BeforeEach
-    void setUp() {
-        requestRepository = new RequestRepository();
-        requestService = new RequestServiceImpl(requestRepository);
-        requestController = new RequestController(requestService);
-
-        request1 = Request.builder()
-                .requestId("1")
-                .productName("Toy Car")
-                .imageLink("http://example.com/toycar.png")
-                .price(200.0)
-                .productLink("http://example.com/toycar")
-                .currency("USD")
-                .status("PENDING")
-                .build();
-
-        request2 = Request.builder()
-                .requestId("2")
-                .productName("Toy Train")
-                .imageLink("http://example.com/toytrain.png")
-                .price(150.0)
-                .productLink("http://example.com/toytrain")
-                .currency("USD")
-                .status("PENDING")
-                .build();
+    public void setUp() {
+        request = new Request("1", "Product", "http://image.link", 100.0, "http://product.link", "USD", "PENDING");
     }
 
     @Test
-    void testCreateRequest() {
-        requestController.createRequest(request1);
-        Request createdRequest = requestController.getRequestById("1").getBody();
+    public void testCreateRequest() throws Exception {
+        when(requestService.save(any(Request.class))).thenReturn(request);
 
-        assertEquals(request1.getRequestId(), createdRequest.getRequestId());
-        assertEquals(request1.getProductName(), createdRequest.getProductName());
-        assertEquals(request1.getPrice(), createdRequest.getPrice());
+        mockMvc.perform(post("/api/requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productName\":\"Product\",\"imageLink\":\"http://image.link\",\"price\":100.0,\"productLink\":\"http://product.link\",\"currency\":\"USD\",\"status\":\"PENDING\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(request.getId())))
+                .andExpect(jsonPath("$.productName", is(request.getProductName())))
+                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
+                .andExpect(jsonPath("$.price", is(request.getPrice())))
+                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
+                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
+                .andExpect(jsonPath("$.status", is(request.getStatus())));
+
+        verify(requestService, times(1)).save(any(Request.class));
     }
 
     @Test
-    void testGetRequestById() {
-        requestController.createRequest(request1);
-        Request foundRequest = requestController.getRequestById("1").getBody();
+    public void testGetRequestById() throws Exception {
+        when(requestService.findById("1")).thenReturn(request);
 
-        assertEquals(request1.getRequestId(), foundRequest.getRequestId());
-        assertEquals(request1.getProductName(), foundRequest.getProductName());
+        mockMvc.perform(get("/api/requests/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(request.getId())))
+                .andExpect(jsonPath("$.productName", is(request.getProductName())))
+                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
+                .andExpect(jsonPath("$.price", is(request.getPrice())))
+                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
+                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
+                .andExpect(jsonPath("$.status", is(request.getStatus())));
+
+        verify(requestService, times(1)).findById("1");
     }
 
     @Test
-    void testGetAllRequests() {
-        requestController.createRequest(request1);
-        requestController.createRequest(request2);
+    public void testGetAllRequests() throws Exception {
+        List<Request> requests = Arrays.asList(request);
+        when(requestService.findAll()).thenReturn(requests);
 
-        List<Request> foundRequests = requestController.getAllRequests().getBody();
+        mockMvc.perform(get("/api/requests")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(request.getId())))
+                .andExpect(jsonPath("$[0].productName", is(request.getProductName())))
+                .andExpect(jsonPath("$[0].imageLink", is(request.getImageLink())))
+                .andExpect(jsonPath("$[0].price", is(request.getPrice())))
+                .andExpect(jsonPath("$[0].productLink", is(request.getProductLink())))
+                .andExpect(jsonPath("$[0].currency", is(request.getCurrency())))
+                .andExpect(jsonPath("$[0].status", is(request.getStatus())));
 
-        assertEquals(2, foundRequests.size());
-        assertEquals(request1.getRequestId(), foundRequests.get(0).getRequestId());
-        assertEquals(request2.getRequestId(), foundRequests.get(1).getRequestId());
+        verify(requestService, times(1)).findAll();
     }
 
     @Test
-    void testUpdateRequest() {
-        requestController.createRequest(request1);
-        request1.setProductName("Updated Toy Car");
-        requestController.updateRequest("1", request1);
+    public void testUpdateRequest() throws Exception {
+        when(requestService.save(any(Request.class))).thenReturn(request);
 
-        Request updatedRequest = requestController.getRequestById("1").getBody();
+        mockMvc.perform(put("/api/requests/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productName\":\"Product\",\"imageLink\":\"http://image.link\",\"price\":100.0,\"productLink\":\"http://product.link\",\"currency\":\"USD\",\"status\":\"PENDING\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(request.getId())))
+                .andExpect(jsonPath("$.productName", is(request.getProductName())))
+                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
+                .andExpect(jsonPath("$.price", is(request.getPrice())))
+                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
+                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
+                .andExpect(jsonPath("$.status", is(request.getStatus())));
 
-        assertEquals(request1.getRequestId(), updatedRequest.getRequestId());
-        assertEquals("Updated Toy Car", updatedRequest.getProductName());
+        verify(requestService, times(1)).save(any(Request.class));
     }
 
     @Test
-    void testDeleteRequest() {
-        requestController.createRequest(request1);
-        requestController.deleteRequest("1");
+    public void testDeleteRequest() throws Exception {
+        doNothing().when(requestService).deleteById("1");
 
-        Request foundRequest = requestController.getRequestById("1").getBody();
-        assertNull(foundRequest);
+        mockMvc.perform(delete("/api/requests/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(requestService, times(1)).deleteById("1");
     }
 }
