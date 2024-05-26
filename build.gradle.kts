@@ -26,26 +26,27 @@ repositories {
 val dotenvVersion = "4.0.0"
 val springBootVersion = "2.5.0"
 val micrometerVersion = "1.12.5"
+val jsonVersion = "20210307"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("me.paulschwarz:spring-dotenv:$dotenvVersion")
-    implementation("org.json:json:20210307")
+    implementation("org.json:json:$jsonVersion")
     implementation("org.springframework.boot:spring-boot-starter-webflux") // for WebClient
-    compileOnly("org.projectlombok:lombok")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("org.postgresql:postgresql")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    annotationProcessor("org.projectlombok:lombok")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito:mockito-junit-jupiter")
-    implementation("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
+    compileOnly("org.projectlombok:lombok")
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 
 sonar {
