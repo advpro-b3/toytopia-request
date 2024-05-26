@@ -27,7 +27,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: jdbc:postgresql://localhost:5432/request
+          POSTGRES_DB: request
 
     steps:
       - uses: actions/checkout@v3
