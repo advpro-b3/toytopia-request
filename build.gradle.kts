@@ -24,6 +24,8 @@ repositories {
 }
 
 val dotenvVersion = "4.0.0"
+val springBootVersion = "2.5.0"
+val micrometerVersion = "1.12.5"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -42,6 +44,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito:mockito-junit-jupiter")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
 }
 
 sonar {
