@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.2.4"
     id("io.spring.dependency-management") version "1.1.4"
     jacoco
+    id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "id.ac.ui.cs.advprog"
@@ -43,6 +44,13 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter")
 }
 
+sonar {
+    properties {
+        property ("sonar.projectKey", "advpro-b3_toytopia-request")
+        property ("sonar.organization", "advpro-b3")
+        property ("sonar.host.url", "https://sonarcloud.io")
+    }
+}
 
 tasks.withType<Test> {
     useJUnitPlatform()
