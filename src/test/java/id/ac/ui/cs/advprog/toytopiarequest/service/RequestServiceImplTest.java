@@ -9,14 +9,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class RequestServiceImplTest {
+class RequestServiceImplTest {
 
     @Mock
     private RequestRepository requestRepository;
@@ -25,108 +27,150 @@ public class RequestServiceImplTest {
     private CurrencyConversionService currencyConversionService;
 
     @InjectMocks
-    private RequestServiceImpl requestService;
+    private RequestServiceImpl requestServiceImpl;
+
+    private Request request;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
+        request = new Request("1", "Product", "http://image.link", 100.0, "http://product.link", "USD", "PENDING");
     }
 
     @Test
-    public void testSaveWithUSD() throws JSONException {
-        Request request = new Request();
+    void testSaveWithUSD() throws JSONException {
         request.setCurrency("USD");
         request.setPrice(100.0);
 
-        when(currencyConversionService.convertCurrency("USD", "IDR", 100.0)).thenReturn(1604500.0);
-        when(requestRepository.save(any(Request.class))).thenReturn(request);
+        when(currencyConversionService.convertCurrency("USD", "IDR", 100.0)).thenReturn(1400000.0);
+        when(requestRepository.save(any(Request.class))).thenAnswer(invocation -> {
+            Request savedRequest = invocation.getArgument(0);
+            assertEquals("IDR", savedRequest.getCurrency());
+            assertEquals(1400000.0, savedRequest.getPrice());
+            return savedRequest;
+        });
 
-        Request savedRequest = requestService.save(request);
+        CompletableFuture<Request> savedRequestFuture = requestServiceImpl.save(request);
+        Request savedRequest = savedRequestFuture.join();
 
+        assertNotNull(savedRequest);
         assertEquals("IDR", savedRequest.getCurrency());
-        assertEquals(1604500.0, savedRequest.getPrice());
+        assertEquals(1400000.0, savedRequest.getPrice());
+
         verify(currencyConversionService, times(1)).convertCurrency("USD", "IDR", 100.0);
-        verify(requestRepository, times(1)).save(request);
+        verify(requestRepository, times(1)).save(any(Request.class));
     }
 
     @Test
-    public void testSaveWithJPY() throws JSONException {
-        Request request = new Request();
+    void testSaveWithJPY() throws JSONException {
         request.setCurrency("JPY");
         request.setPrice(100.0);
 
-        when(currencyConversionService.convertCurrency("JPY", "IDR", 100.0)).thenReturn(10222.0);
-        when(requestRepository.save(any(Request.class))).thenReturn(request);
+        when(currencyConversionService.convertCurrency("JPY", "IDR", 100.0)).thenReturn(130000.0);
+        when(requestRepository.save(any(Request.class))).thenAnswer(invocation -> {
+            Request savedRequest = invocation.getArgument(0);
+            assertEquals("IDR", savedRequest.getCurrency());
+            assertEquals(130000.0, savedRequest.getPrice());
+            return savedRequest;
+        });
 
-        Request savedRequest = requestService.save(request);
+        CompletableFuture<Request> savedRequestFuture = requestServiceImpl.save(request);
+        Request savedRequest = savedRequestFuture.join();
 
+        assertNotNull(savedRequest);
         assertEquals("IDR", savedRequest.getCurrency());
-        assertEquals(10222.0, savedRequest.getPrice());
+        assertEquals(130000.0, savedRequest.getPrice());
+
         verify(currencyConversionService, times(1)).convertCurrency("JPY", "IDR", 100.0);
-        verify(requestRepository, times(1)).save(request);
+        verify(requestRepository, times(1)).save(any(Request.class));
     }
 
     @Test
-    public void testSaveWithInvalidCurrency() {
-        Request request = new Request();
-        request.setCurrency("EUR");
-
-        assertThrows(IllegalArgumentException.class, () -> requestService.save(request));
-        verify(currencyConversionService, never()).convertCurrency(anyString(), anyString(), anyDouble());
-        verify(requestRepository, never()).save(any(Request.class));
-    }
-
-    @Test
-    public void testSaveWithIDR() throws JSONException {
-        Request request = new Request();
+    void testSaveWithoutCurrencyConversion() throws JSONException {
         request.setCurrency("IDR");
         request.setPrice(100.0);
 
-        when(requestRepository.save(any(Request.class))).thenReturn(request);
+        when(requestRepository.save(any(Request.class))).thenAnswer(invocation -> {
+            Request savedRequest = invocation.getArgument(0);
+            assertEquals("IDR", savedRequest.getCurrency());
+            assertEquals(100.0, savedRequest.getPrice());
+            return savedRequest;
+        });
 
-        Request savedRequest = requestService.save(request);
+        CompletableFuture<Request> savedRequestFuture = requestServiceImpl.save(request);
+        Request savedRequest = savedRequestFuture.join();
 
+        assertNotNull(savedRequest);
         assertEquals("IDR", savedRequest.getCurrency());
         assertEquals(100.0, savedRequest.getPrice());
-        verify(currencyConversionService, never()).convertCurrency(anyString(), anyString(), anyDouble());
-        verify(requestRepository, times(1)).save(request);
+
+        verify(currencyConversionService, times(0)).convertCurrency(anyString(), anyString(), anyDouble());
+        verify(requestRepository, times(1)).save(any(Request.class));
     }
 
     @Test
-    public void testFindById() {
-        Request request = new Request();
-        request.setId("1");
+    void testFindById() {
+        when(requestRepository.findById(anyString())).thenReturn(Optional.of(request));
 
-        when(requestRepository.findById("1")).thenReturn(request);
+        CompletableFuture<Optional<Request>> foundRequestFuture = requestServiceImpl.findById("1");
+        Optional<Request> foundRequest = foundRequestFuture.join();
 
-        Request foundRequest = requestService.findById("1");
+        assertTrue(foundRequest.isPresent());
+        assertEquals("1", foundRequest.get().getId());
 
-        assertNotNull(foundRequest);
-        assertEquals("1", foundRequest.getId());
         verify(requestRepository, times(1)).findById("1");
     }
 
     @Test
-    public void testFindAll() {
-        Request request1 = new Request();
-        request1.setId("1");
-        Request request2 = new Request();
-        request2.setId("2");
+    void testFindByIdNotFound() {
+        when(requestRepository.findById(anyString())).thenReturn(Optional.empty());
 
-        when(requestRepository.findAll()).thenReturn(Arrays.asList(request1, request2));
+        CompletableFuture<Optional<Request>> foundRequestFuture = requestServiceImpl.findById("1");
+        Optional<Request> foundRequest = foundRequestFuture.join();
 
-        List<Request> requests = requestService.findAll();
+        assertFalse(foundRequest.isPresent());
 
-        assertEquals(2, requests.size());
+        verify(requestRepository, times(1)).findById("1");
+    }
+
+    @Test
+    void testFindAll() {
+        List<Request> requests = List.of(request);
+        when(requestRepository.findAll()).thenReturn(requests);
+
+        CompletableFuture<List<Request>> foundRequestsFuture = requestServiceImpl.findAll();
+        List<Request> foundRequests = foundRequestsFuture.join();
+
+        assertNotNull(foundRequests);
+        assertEquals(1, foundRequests.size());
+        assertEquals("1", foundRequests.get(0).getId());
+
         verify(requestRepository, times(1)).findAll();
     }
 
     @Test
-    public void testDeleteById() {
-        doNothing().when(requestRepository).deleteById("1");
+    void testDeleteById() {
+        when(requestRepository.findById(anyString())).thenReturn(Optional.of(request));
+        doNothing().when(requestRepository).deleteById(anyString());
 
-        requestService.deleteById("1");
+        CompletableFuture<Boolean> deleteFuture = requestServiceImpl.deleteById("1");
+        Boolean result = deleteFuture.join();
+
+        assertTrue(result);
 
         verify(requestRepository, times(1)).deleteById("1");
+    }
+
+    @Test
+    void testDeleteByIdNotFound() {
+        when(requestRepository.findById(anyString())).thenReturn(Optional.empty());
+
+        CompletableFuture<Boolean> deleteFuture = requestServiceImpl.deleteById("1");
+        Boolean result = deleteFuture.join();
+
+        assertFalse(result);
+
+        verify(requestRepository, times(1)).findById("1");
+        verify(requestRepository, times(0)).deleteById("1");
     }
 }

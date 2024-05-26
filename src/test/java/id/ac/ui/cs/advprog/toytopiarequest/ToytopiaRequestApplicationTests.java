@@ -8,6 +8,7 @@ class ToytopiaRequestApplicationTests {
 
     @Test
     void contextLoads() {
+        ToytopiaRequestApplication.main(new String[] {});
     }
 
 }

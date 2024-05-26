@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class RequestRepository {
@@ -23,8 +24,8 @@ public class RequestRepository {
         return request;
     }
 
-    public Request findById(String id) {
-        return entityManager.find(Request.class, id);
+    public Optional<Request> findById(String id) {
+        return Optional.ofNullable(entityManager.find(Request.class, id));
     }
 
     public List<Request> findAll() {

@@ -4,10 +4,12 @@ import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import org.json.JSONException;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface RequestService {
-    Request save(Request request) throws JSONException;
-    Request findById(String requestId);
-    List<Request> findAll();
-    void deleteById(String requestId);
+    CompletableFuture<Request> save(Request request) throws JSONException;
+    CompletableFuture<Optional<Request>> findById(String requestId);
+    CompletableFuture<List<Request>> findAll();
+    CompletableFuture<Boolean> deleteById(String requestId);
 }

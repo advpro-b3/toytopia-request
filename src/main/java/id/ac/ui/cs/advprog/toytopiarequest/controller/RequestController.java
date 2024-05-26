@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/requests")
@@ -20,33 +21,34 @@ public class RequestController {
     }
 
     @PostMapping
-    public ResponseEntity<Request> createRequest(@RequestBody Request request) {
-        Request createdRequest = requestService.save(request);
-        return ResponseEntity.ok(createdRequest);
+    public CompletableFuture<ResponseEntity<Request>> createRequest(@RequestBody Request request) {
+        return requestService.save(request)
+                .thenApply(ResponseEntity::ok);
     }
 
     @GetMapping("/{requestId}")
-    public ResponseEntity<Request> getRequestById(@PathVariable String requestId) {
-        Request foundRequest = requestService.findById(requestId);
-        return ResponseEntity.ok(foundRequest);
+    public CompletableFuture<ResponseEntity<Request>> getRequestById(@PathVariable String requestId) {
+        return requestService.findById(requestId)
+                .thenApply(request -> request.map(ResponseEntity::ok)
+                        .orElseGet(() -> ResponseEntity.notFound().build()));
     }
 
     @GetMapping
-    public ResponseEntity<List<Request>> getAllRequests() {
-        List<Request> allRequests = requestService.findAll();
-        return ResponseEntity.ok(allRequests);
+    public CompletableFuture<ResponseEntity<List<Request>>> getAllRequests() {
+        return requestService.findAll()
+                .thenApply(ResponseEntity::ok);
     }
 
     @PutMapping("/{requestId}")
-    public ResponseEntity<Request> updateRequest(@PathVariable String requestId, @RequestBody Request request) {
+    public CompletableFuture<ResponseEntity<Request>> updateRequest(@PathVariable String requestId, @RequestBody Request request) {
         request.setId(requestId);
-        Request updatedRequest = requestService.save(request);
-        return ResponseEntity.ok(updatedRequest);
+        return requestService.save(request)
+                .thenApply(ResponseEntity::ok);
     }
 
     @DeleteMapping("/{requestId}")
-    public ResponseEntity<Void> deleteRequest(@PathVariable String requestId) {
-        requestService.deleteById(requestId);
-        return ResponseEntity.ok().build();
+    public CompletableFuture<ResponseEntity<Void>> deleteRequest(@PathVariable String requestId) {
+        return requestService.deleteById(requestId)
+                .thenApply(success -> success ? ResponseEntity.ok().build() : ResponseEntity.notFound().build());
     }
 }

@@ -4,9 +4,12 @@ import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import id.ac.ui.cs.advprog.toytopiarequest.repository.RequestRepository;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class RequestServiceImpl implements RequestService {
@@ -20,7 +23,8 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public Request save(Request request) throws JSONException {
+    @Async("taskExecutor")
+    public CompletableFuture<Request> save(Request request) throws JSONException {
         if (!request.getCurrency().equals("IDR")) {
             double convertedPrice;
             if (request.getCurrency().equals("USD")) {
@@ -33,21 +37,30 @@ public class RequestServiceImpl implements RequestService {
             request.setCurrency("IDR");
             request.setPrice(convertedPrice);
         }
-        return requestRepository.save(request);
+        return CompletableFuture.completedFuture(requestRepository.save(request));
     }
 
     @Override
-    public Request findById(String requestId) {
-        return requestRepository.findById(requestId);
+    @Async("taskExecutor")
+    public CompletableFuture<Optional<Request>> findById(String requestId) {
+        return CompletableFuture.completedFuture(requestRepository.findById(requestId));
     }
 
     @Override
-    public List<Request> findAll() {
-        return requestRepository.findAll();
+    @Async("taskExecutor")
+    public CompletableFuture<List<Request>> findAll() {
+        return CompletableFuture.completedFuture(requestRepository.findAll());
     }
 
     @Override
-    public void deleteById(String requestId) {
-        requestRepository.deleteById(requestId);
+    @Async("taskExecutor")
+    public CompletableFuture<Boolean> deleteById(String requestId) {
+        Optional<Request> requestOptional = requestRepository.findById(requestId);
+        if (requestOptional.isPresent()) {
+            requestRepository.deleteById(requestId);
+            return CompletableFuture.completedFuture(true);
+        } else {
+            return CompletableFuture.completedFuture(false);
+        }
     }
 }

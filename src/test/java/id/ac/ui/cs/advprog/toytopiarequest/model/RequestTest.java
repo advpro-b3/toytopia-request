@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RequestTest {
+class RequestTest {
 
     @Test
-    public void testNoArgsConstructor() {
+    void testNoArgsConstructor() {
         Request request = new Request();
         assertNull(request.getId());
         assertNull(request.getProductName());
@@ -19,7 +19,7 @@ public class RequestTest {
     }
 
     @Test
-    public void testAllArgsConstructor() {
+    void testAllArgsConstructor() {
         Request request = new Request("1", "Product", "http://image.link", 100.0, "http://product.link", "USD", "PENDING");
         assertEquals("1", request.getId());
         assertEquals("Product", request.getProductName());
@@ -31,7 +31,7 @@ public class RequestTest {
     }
 
     @Test
-    public void testBuilder() {
+    void testBuilder() {
         Request request = Request.builder()
                 .id("1")
                 .productName("Product")
@@ -51,7 +51,7 @@ public class RequestTest {
     }
 
     @Test
-    public void testSettersAndGetters() {
+    void testSettersAndGetters() {
         Request request = new Request();
         request.setId("1");
         request.setProductName("Product");
@@ -85,7 +85,6 @@ public class RequestTest {
         assertEquals(expected, request.toString());
     }
 
-
     @Test
     void testEqualsAndHashCode() {
         Request request1 = Request.builder()
@@ -99,16 +98,6 @@ public class RequestTest {
                 .build();
 
         Request request2 = Request.builder()
-                .id("1")
-                .productName("Product")
-                .imageLink("http://image.link")
-                .price(100.0)
-                .productLink("http://product.link")
-                .currency("USD")
-                .status("PENDING")
-                .build();
-
-        Request request3 = Request.builder()
                 .id("2")
                 .productName("Product2")
                 .imageLink("http://image2.link")
@@ -118,7 +107,7 @@ public class RequestTest {
                 .status("COMPLETED")
                 .build();
 
-        assertNotEquals(request1, request3);
-        assertNotEquals(request1.hashCode(), request3.hashCode());
+        assertNotEquals(request1, request2);
+        assertNotEquals(request1.hashCode(), request2.hashCode());
     }
 }

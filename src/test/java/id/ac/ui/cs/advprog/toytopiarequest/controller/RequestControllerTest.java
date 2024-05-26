@@ -4,122 +4,119 @@ import id.ac.ui.cs.advprog.toytopiarequest.model.Request;
 import id.ac.ui.cs.advprog.toytopiarequest.service.RequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(RequestController.class)
-public class RequestControllerTest {
+class RequestControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private RequestService requestService;
+
+    @InjectMocks
+    private RequestController requestController;
 
     private Request request;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
         request = new Request("1", "Product", "http://image.link", 100.0, "http://product.link", "USD", "PENDING");
     }
 
     @Test
-    public void testCreateRequest() throws Exception {
-        when(requestService.save(any(Request.class))).thenReturn(request);
+    void testCreateRequest() throws Exception {
+        when(requestService.save(any(Request.class))).thenReturn(CompletableFuture.completedFuture(request));
 
-        mockMvc.perform(post("/api/requests")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"productName\":\"Product\",\"imageLink\":\"http://image.link\",\"price\":100.0,\"productLink\":\"http://product.link\",\"currency\":\"USD\",\"status\":\"PENDING\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(request.getId())))
-                .andExpect(jsonPath("$.productName", is(request.getProductName())))
-                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
-                .andExpect(jsonPath("$.price", is(request.getPrice())))
-                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
-                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
-                .andExpect(jsonPath("$.status", is(request.getStatus())));
+        CompletableFuture<ResponseEntity<Request>> result = requestController.createRequest(request);
 
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.ok(request), result.join());
         verify(requestService, times(1)).save(any(Request.class));
     }
 
     @Test
-    public void testGetRequestById() throws Exception {
-        when(requestService.findById("1")).thenReturn(request);
+    void testGetRequestById() throws Exception {
+        when(requestService.findById("1")).thenReturn(CompletableFuture.completedFuture(Optional.of(request)));
 
-        mockMvc.perform(get("/api/requests/1")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(request.getId())))
-                .andExpect(jsonPath("$.productName", is(request.getProductName())))
-                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
-                .andExpect(jsonPath("$.price", is(request.getPrice())))
-                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
-                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
-                .andExpect(jsonPath("$.status", is(request.getStatus())));
+        CompletableFuture<ResponseEntity<Request>> result = requestController.getRequestById("1");
 
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.ok(request), result.join());
         verify(requestService, times(1)).findById("1");
     }
 
     @Test
-    public void testGetAllRequests() throws Exception {
+    void testGetRequestByIdNotFound() throws Exception {
+        when(requestService.findById("1")).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+
+        CompletableFuture<ResponseEntity<Request>> result = requestController.getRequestById("1");
+
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.notFound().build(), result.join());
+        verify(requestService, times(1)).findById("1");
+    }
+
+    @Test
+    void testGetAllRequests() throws Exception {
         List<Request> requests = Arrays.asList(request);
-        when(requestService.findAll()).thenReturn(requests);
+        when(requestService.findAll()).thenReturn(CompletableFuture.completedFuture(requests));
 
-        mockMvc.perform(get("/api/requests")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(request.getId())))
-                .andExpect(jsonPath("$[0].productName", is(request.getProductName())))
-                .andExpect(jsonPath("$[0].imageLink", is(request.getImageLink())))
-                .andExpect(jsonPath("$[0].price", is(request.getPrice())))
-                .andExpect(jsonPath("$[0].productLink", is(request.getProductLink())))
-                .andExpect(jsonPath("$[0].currency", is(request.getCurrency())))
-                .andExpect(jsonPath("$[0].status", is(request.getStatus())));
+        CompletableFuture<ResponseEntity<List<Request>>> result = requestController.getAllRequests();
 
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.ok(requests), result.join());
         verify(requestService, times(1)).findAll();
     }
 
     @Test
-    public void testUpdateRequest() throws Exception {
-        when(requestService.save(any(Request.class))).thenReturn(request);
+    void testUpdateRequest() throws Exception {
+        when(requestService.save(any(Request.class))).thenReturn(CompletableFuture.completedFuture(request));
 
-        mockMvc.perform(put("/api/requests/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"productName\":\"Product\",\"imageLink\":\"http://image.link\",\"price\":100.0,\"productLink\":\"http://product.link\",\"currency\":\"USD\",\"status\":\"PENDING\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(request.getId())))
-                .andExpect(jsonPath("$.productName", is(request.getProductName())))
-                .andExpect(jsonPath("$.imageLink", is(request.getImageLink())))
-                .andExpect(jsonPath("$.price", is(request.getPrice())))
-                .andExpect(jsonPath("$.productLink", is(request.getProductLink())))
-                .andExpect(jsonPath("$.currency", is(request.getCurrency())))
-                .andExpect(jsonPath("$.status", is(request.getStatus())));
+        CompletableFuture<ResponseEntity<Request>> result = requestController.updateRequest("1", request);
 
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.ok(request), result.join());
         verify(requestService, times(1)).save(any(Request.class));
     }
 
     @Test
-    public void testDeleteRequest() throws Exception {
-        doNothing().when(requestService).deleteById("1");
+    void testDeleteRequest() throws Exception {
+        when(requestService.deleteById("1")).thenReturn(CompletableFuture.completedFuture(true));
 
-        mockMvc.perform(delete("/api/requests/1")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        CompletableFuture<ResponseEntity<Void>> result = requestController.deleteRequest("1");
 
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.ok().build(), result.join());
+        verify(requestService, times(1)).deleteById("1");
+    }
+
+    @Test
+    void testDeleteRequestNotFound() throws Exception {
+        when(requestService.deleteById("1")).thenReturn(CompletableFuture.completedFuture(false));
+
+        CompletableFuture<ResponseEntity<Void>> result = requestController.deleteRequest("1");
+
+        assertNotNull(result);
+        assertTrue(result.isDone());
+        assertEquals(ResponseEntity.notFound().build(), result.join());
         verify(requestService, times(1)).deleteById("1");
     }
 }

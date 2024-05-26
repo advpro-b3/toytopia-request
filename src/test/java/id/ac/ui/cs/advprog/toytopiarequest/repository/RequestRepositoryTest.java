@@ -12,13 +12,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-public class RequestRepositoryTest {
+class RequestRepositoryTest {
 
     @Mock
     private EntityManager entityManager;
@@ -27,12 +28,12 @@ public class RequestRepositoryTest {
     private RequestRepository requestRepository;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testSaveNewRequest() {
+    void testSaveNewRequest() {
         Request request = new Request();
         request.setCurrency("USD");
         request.setPrice(100.0);
@@ -44,7 +45,7 @@ public class RequestRepositoryTest {
     }
 
     @Test
-    public void testSaveExistingRequest() {
+    void testSaveExistingRequest() {
         Request request = new Request();
         request.setId("1");
         request.setCurrency("USD");
@@ -57,20 +58,21 @@ public class RequestRepositoryTest {
     }
 
     @Test
-    public void testFindById() {
+    void testFindById() {
         Request request = new Request();
         request.setId("1");
         when(entityManager.find(Request.class, "1")).thenReturn(request);
 
-        Request foundRequest = requestRepository.findById("1");
+        Optional<Request> foundRequest = requestRepository.findById("1");
 
         assertNotNull(foundRequest);
-        assertEquals("1", foundRequest.getId());
+        assertTrue(foundRequest.isPresent());
+        assertEquals("1", foundRequest.get().getId());
         verify(entityManager, times(1)).find(Request.class, "1");
     }
 
     @Test
-    public void testFindAll() {
+    void testFindAll() {
         Request request1 = new Request();
         request1.setId("1");
         Request request2 = new Request();
@@ -88,7 +90,7 @@ public class RequestRepositoryTest {
     }
 
     @Test
-    public void testDeleteById() {
+    void testDeleteById() {
         Request request = new Request();
         request.setId("1");
         when(entityManager.find(Request.class, "1")).thenReturn(request);
@@ -99,7 +101,7 @@ public class RequestRepositoryTest {
     }
 
     @Test
-    public void testDeleteByIdNotFound() {
+    void testDeleteByIdNotFound() {
         when(entityManager.find(Request.class, "1")).thenReturn(null);
 
         requestRepository.deleteById("1");
