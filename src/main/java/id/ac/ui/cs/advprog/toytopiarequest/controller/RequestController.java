@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/requests")
+@CrossOrigin("*")
 public class RequestController {
 
     private final RequestService requestService;
